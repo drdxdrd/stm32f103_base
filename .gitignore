@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# binary files
+bin/
+
+# QtCreator
+build-*/
+*.txt.user
+
+
