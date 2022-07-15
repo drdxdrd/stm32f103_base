@@ -34,7 +34,6 @@ if(NOT EXISTS ${BIN_DIR})
 endif()
 
 
-#set(TOOLCHAIN_PATH /home/drd/opt/gcc-arm/bin)
 # check toolcain path
 if ("${TOOLCHAIN_PATH}" STREQUAL "")
   message(WARNING "variable TOOLCHAIN_PATH not set")
