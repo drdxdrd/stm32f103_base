@@ -42,15 +42,20 @@ else()
 endif()
 
 #AS = $(BINPATH)/$(PREFIX)gcc -x assembler-with-cpp
-SET(CMAKE_ASM_COMPILER "${TOOLCHAIN_PATH}/arm-none-eabi-gcc" )
-SET(CMAKE_C_COMPILER "${TOOLCHAIN_PATH}/arm-none-eabi-gcc" )
-SET(CMAKE_CXX_COMPILER "${TOOLCHAIN_PATH}/arm-none-eabi-c++" )
-SET(CMAKE_C_AR "${TOOLCHAIN_PATH}/arm-none-eabi-ar" )
-SET(CMAKE_C_LINKER "${TOOLCHAIN_PATH}/arm-none-eabi-ld" )
-SET(CMAKE_OBJCOPY "${TOOLCHAIN_PATH}/arm-none-eabi-objcopy" )
-SET(CMAKE_OBJDUMP "${TOOLCHAIN_PATH}/arm-none-eabi-objdump" )
-SET(CMAKE_SIZE "${TOOLCHAIN_PATH}/arm-none-eabi-size" )
+#SET(CMAKE_ASM_COMPILER "${TOOLCHAIN_PATH}/arm-none-eabi-gcc" )
+#SET(CMAKE_C_COMPILER "${TOOLCHAIN_PATH}/arm-none-eabi-gcc" )
+#SET(CMAKE_CXX_COMPILER "${TOOLCHAIN_PATH}/arm-none-eabi-c++" )
+#SET(CMAKE_C_AR "${TOOLCHAIN_PATH}/arm-none-eabi-ar" )
+#SET(CMAKE_C_LINKER "${TOOLCHAIN_PATH}/arm-none-eabi-ld" )
+#SET(CMAKE_OBJCOPY "${TOOLCHAIN_PATH}/arm-none-eabi-objcopy" )
+#SET(CMAKE_OBJDUMP "${TOOLCHAIN_PATH}/arm-none-eabi-objdump" )
+#SET(CMAKE_SIZE "${TOOLCHAIN_PATH}/arm-none-eabi-size" )
 
+SET(CMAKE_C_AR "${TOOLCHAIN_PATH}/bin/arm-none-eabi-ar" )
+SET(CMAKE_C_LINKER "${TOOLCHAIN_PATH}/bin/arm-none-eabi-ld" )
+SET(CMAKE_OBJCOPY "${TOOLCHAIN_PATH}/bin/arm-none-eabi-objcopy" )
+SET(CMAKE_OBJDUMP "${TOOLCHAIN_PATH}/bin/arm-none-eabi-objdump" )
+SET(CMAKE_SIZE "${TOOLCHAIN_PATH}/bin/arm-none-eabi-size" )
 
 
 #####################################################
@@ -83,13 +88,16 @@ SET(CMAKE_SIZE "${TOOLCHAIN_PATH}/arm-none-eabi-size" )
 # */
 #####################################################
 #-specs=nosys.specs -specs=nano.specs -u _printf_float
+include_directories("${TOOLCHAIN_PATH}/arm-none-eabi/include")
+
 
 set ( CMAKE_C_FLAGS "-g3 -O0 -Wall -mthumb -mcpu=cortex-m3  -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER ")
-set ( CMAKE_CXX_FLAGS "-g3 -O0 -Wall -mthumb -mcpu=cortex-m3 -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER ")
+set ( CMAKE_CXX_FLAGS "-fno-exceptions  -g3 -O0 -Wall -mthumb -mcpu=cortex-m3 -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER ")
 
 #LDFLAGS
 set(LD_FILE ${SRC_DIR}/system/stm32f103c8tx_flash.ld)
-set ( CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -specs=nosys.specs -u _printf_float -Wl,--gc-sections" )
+#set ( CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -specs=nosys.specs -u _printf_float -Wl,--gc-sections" )
+set ( CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -Wl,--gc-sections" )
 set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LD_FILE}" )
 
 #ASMFLAGS
@@ -99,6 +107,7 @@ set ( CMAKE_ASM_FLAGS "-x assembler-with-cpp ${CMAKE_C_FLAGS}")
 set(STARTUP_FILE ${SRC_DIR}/system/startup_stm32f10x_md.s)
 
 add_executable ( ${PROJECT_NAME}.elf ${H_FILES} ${C_FILES} ${CPP_FILES} ${STARTUP_FILE})
+#target_link_libraries(${PROJECT_NAME}    -lc )
 
 # Create project.bin and copy it to bin directory
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME}.elf

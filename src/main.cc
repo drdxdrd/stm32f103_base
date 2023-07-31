@@ -19,9 +19,10 @@ int main() {
   SystemInit();
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
   GpioInit();
   UsartInit();
-
+  bool z = false;
   float x = 0.2;
   while (true) {
     x += 0.01;
@@ -29,7 +30,10 @@ int main() {
     const BitAction ba =
         (1 == pin_val) ? BitAction::Bit_SET : BitAction::Bit_RESET;
     GPIO_WriteBit(GPIOB, GPIO_Pin_6, ba);
+    const BitAction cba = (z) ? BitAction::Bit_SET : BitAction::Bit_RESET;
+    GPIO_WriteBit(GPIOC, GPIO_Pin_13, cba);
     printf("pin value = [%d] x = [%.2f]\n\r", pin_val, x);
+    z = !z;
     Delay(200);
   }
 
@@ -57,6 +61,11 @@ void GpioInit() {
   gpio_cfg.GPIO_Mode = GPIO_Mode_IN_FLOATING;
   gpio_cfg.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOB, &gpio_cfg);
+  // PC13, выход
+  gpio_cfg.GPIO_Pin = GPIO_Pin_13;
+  gpio_cfg.GPIO_Mode = GPIO_Mode_Out_PP;
+  gpio_cfg.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOC, &gpio_cfg);
 }
 
 void UsartInit() {
@@ -119,6 +128,18 @@ int _write(int file, char* ptr, int len) {
     return -1;
   }
 }
+
+// #define nop()  __asm__("nop")
+void _exit(int a) {
+  for (;;)
+    ;
+}
+int _sbrk() { return -1; }
+int _close() { return -1; }
+int _read() { return -1; }
+int _fstat() { return -1; }
+int _isatty() { return -1; }
+int _lseek() { return -1; }
 
 #ifdef __cplusplus
 }
