@@ -87,9 +87,9 @@ void PendSV_Handler(void)
   * @param  None
   * @retval None
   */
-void SysTick_Handler(void)
-{
-}
+// void SysTick_Handler(void)
+//{
+// }
 
 /******************************************************************************/
 /*                 STM32F0xx Peripherals Interrupt Handlers                   */

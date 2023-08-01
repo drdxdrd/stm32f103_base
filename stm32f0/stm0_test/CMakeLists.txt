@@ -14,7 +14,13 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(RELATIVE_PRJ_DIR ".")
+set(RELATIVE_SCRIPTS_DIR "./scripts")
 get_filename_component(PRJ_DIR ${RELATIVE_PRJ_DIR}  ABSOLUTE)
+get_filename_component(SCRIPTS_DIR ${RELATIVE_SCRIPTS_DIR}  ABSOLUTE)
+
+
+
+
 
 set(SRC_DIR "${PRJ_DIR}/src")
 
@@ -95,6 +101,9 @@ SET(CMAKE_SIZE "${TOOLCHAIN_PATH}/bin/arm-none-eabi-size" )
 set(TARGET_DEVICE STM32F031)
 
 set (CPU -mcpu=cortex-m0)
+set (CPU_RAM 4000)
+set (CPU_FLASH 16000)
+
 #-specs=nosys.specs -specs=nano.specs -u _printf_float
 include_directories("${TOOLCHAIN_PATH}/arm-none-eabi/include")
 include_directories("${PER_LIB_PATH}/CMSIS/Device/ST/STM32F0xx/Include")
@@ -123,24 +132,42 @@ set(StdLib )
 list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/inc/stm32f0xx_rcc.h)
 list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_rcc.c)
 list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_gpio.c)
+list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/inc/stm32f0xx_spi.h)
+list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_spi.c)
+list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/inc/stm32f0xx_misc.h)
+list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_misc.c)
 
 # startup file
 #set(STARTUP_FILE ${SRC_DIR}/system/startup_stm32f10x_md.s)
 set(STARTUP_FILE ${PER_LIB_PATH}/CMSIS/Device/ST/STM32F0xx/Source/Templates/gcc_ride7/startup_stm32f031.s)
-add_executable ( ${PROJECT_NAME}.elf ${H_FILES} ${C_FILES} ${CPP_FILES} ${STARTUP_FILE} ${StdLib})
+add_executable ( ${PROJECT_NAME} ${H_FILES} ${C_FILES} ${CPP_FILES} ${STARTUP_FILE} ${StdLib})
 #add_executable ( ${PROJECT_NAME}.elf ${H_FILES} ${C_FILES} ${CPP_FILES} )
 #target_link_libraries(${PROJECT_NAME}    -lc )
 
 # Create project.bin and copy it to bin directory
-add_custom_command(TARGET ${CMAKE_PROJECT_NAME}.elf
+#add_custom_command(TARGET ${CMAKE_PROJECT_NAME}.elf
+#    POST_BUILD
+#    COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
+#    COMMAND ${CMAKE_OBJCOPY} -Oihex ${PROJECT_NAME}.elf ${PROJECT_NAME}.hex
+#    COMMAND ${CMAKE_SIZE} ${PROJECT_NAME}.elf
+#    COMMENT "Copy to ${BIN_DIR}:------------"
+#    COMMAND cp ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.bin ${BIN_DIR}
+#    COMMAND cp ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.hex ${BIN_DIR}
+#    DEPENDS ${CMAKE_PROJECT_NAME}
+#    )
+
+# Create project.bin and copy it to bin directory
+
+add_custom_command(TARGET ${PROJECT_NAME}
     POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
-    COMMAND ${CMAKE_OBJCOPY} -Oihex ${PROJECT_NAME}.elf ${PROJECT_NAME}.hex
-    COMMAND ${CMAKE_SIZE} ${PROJECT_NAME}.elf
-    COMMENT "Copy to ${BIN_DIR}:------------"
-    COMMAND cp ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.bin ${BIN_DIR}
-    COMMAND cp ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.hex ${BIN_DIR}
-    DEPENDS ${CMAKE_PROJECT_NAME}
+    COMMENT "Create binary from: ${CMAKE_BUILD_TYPE}"
+    COMMAND ${CMAKE_OBJCOPY} -Obinary ${PROJECT_NAME} ${PROJECT_NAME}.bin
+    COMMAND ${CMAKE_OBJCOPY} -Oihex ${PROJECT_NAME} ${PROJECT_NAME}.hex
+    COMMAND ${CMAKE_SIZE} --radix 10 --totals  ${PROJECT_NAME}
+    COMMAND ${SCRIPTS_DIR}/fw_size.py --size ${CMAKE_SIZE} --file-name ${PROJECT_NAME} --flash-size ${CPU_FLASH} --ram-size ${CPU_RAM}
+    COMMAND cp ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.bin ${BIN_DIR}
+    COMMAND cp ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.hex ${BIN_DIR}
+    DEPENDS ${PROJECT_NAME}
     )
 
 
