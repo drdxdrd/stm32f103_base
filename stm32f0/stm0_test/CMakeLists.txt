@@ -98,12 +98,15 @@ include_directories("/home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_St
 include_directories("/home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/CMSIS/Include")
 include_directories("/home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/STM32F0xx_StdPeriph_Driver/inc")
 
-set ( CMAKE_C_FLAGS "-g3 -O0 -Wall -mthumb -mcpu=cortex-m3  -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
-set ( CMAKE_CXX_FLAGS "-fno-exceptions  -g3 -O0 -Wall -mthumb -mcpu=cortex-m3 -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
+#set ( CMAKE_C_FLAGS "-g3 -O0 -Wall -mthumb -mcpu=cortex-m3  -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
+set ( CMAKE_C_FLAGS "-g3 -O0 -Wall -mthumb -mcpu=cortex-m0  -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
+#set ( CMAKE_CXX_FLAGS "-fno-exceptions  -g3 -O0 -Wall -mthumb -mcpu=cortex-m3 -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
+set ( CMAKE_CXX_FLAGS "-fno-exceptions  -g3 -O0 -Wall -mthumb -mcpu=cortex-m0 -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
 
 #LDFLAGS
 #set(LD_FILE ${SRC_DIR}/system/stm32f103c8tx_flash.ld)
-set(LD_FILE /home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Projects/STM32F0xx_StdPeriph_Templates/TrueSTUDIO/STM32F031/STM32F031C6_FLASH.ld)
+#set(LD_FILE /home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Projects/STM32F0xx_StdPeriph_Templates/TrueSTUDIO/STM32F031/STM32F031C6_FLASH.ld)
+set(LD_FILE ${SRC_DIR}/STM32F050K4_FLASH.ld)
 #set ( CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -specs=nosys.specs -u _printf_float -Wl,--gc-sections" )
 set ( CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -Wl,--gc-sections" )
 set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${LD_FILE}" )
