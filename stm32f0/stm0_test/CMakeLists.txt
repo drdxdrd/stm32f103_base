@@ -34,6 +34,9 @@ if(NOT EXISTS ${BIN_DIR})
 endif()
 
 set(TOOLCHAIN_PATH /home/drd/opt/arm-gcc)
+set(PER_LIB_PATH /home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries)
+
+
 # check toolcain path
 if ("${TOOLCHAIN_PATH}" STREQUAL "")
   message(WARNING "variable TOOLCHAIN_PATH not set")
@@ -91,17 +94,17 @@ SET(CMAKE_SIZE "${TOOLCHAIN_PATH}/bin/arm-none-eabi-size" )
 #set(TARGET_DEVICE STM32F0XX_SM)
 set(TARGET_DEVICE STM32F031)
 
-
+set (CPU -mcpu=cortex-m0)
 #-specs=nosys.specs -specs=nano.specs -u _printf_float
 include_directories("${TOOLCHAIN_PATH}/arm-none-eabi/include")
-include_directories("/home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/CMSIS/Device/ST/STM32F0xx/Include")
-include_directories("/home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/CMSIS/Include")
-include_directories("/home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/STM32F0xx_StdPeriph_Driver/inc")
+include_directories("${PER_LIB_PATH}/CMSIS/Device/ST/STM32F0xx/Include")
+include_directories("${PER_LIB_PATH}/CMSIS/Include")
+include_directories("${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/inc")
 
 #set ( CMAKE_C_FLAGS "-g3 -O0 -Wall -mthumb -mcpu=cortex-m3  -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
-set ( CMAKE_C_FLAGS "-g3 -O0 -Wall -mthumb -mcpu=cortex-m0  -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
+set ( CMAKE_C_FLAGS "-g3 -O0 -Wall -mthumb ${CPU} -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
 #set ( CMAKE_CXX_FLAGS "-fno-exceptions  -g3 -O0 -Wall -mthumb -mcpu=cortex-m3 -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
-set ( CMAKE_CXX_FLAGS "-fno-exceptions  -g3 -O0 -Wall -mthumb -mcpu=cortex-m0 -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
+set ( CMAKE_CXX_FLAGS "-fno-exceptions  -g3 -O0 -Wall -mthumb ${CPU} -fdata-sections -ffunction-sections -D STM32F10X_MD -D USE_STDPERIPH_DRIVER -D ${TARGET_DEVICE}")
 
 #LDFLAGS
 #set(LD_FILE ${SRC_DIR}/system/stm32f103c8tx_flash.ld)
@@ -117,13 +120,13 @@ set ( CMAKE_ASM_FLAGS "-x assembler-with-cpp ${CMAKE_C_FLAGS}")
 
 # StdLib
 set(StdLib )
-list(APPEND StdLib /home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/STM32F0xx_StdPeriph_Driver/inc/stm32f0xx_rcc.h)
-list(APPEND StdLib /home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_rcc.c)
-list(APPEND StdLib /home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_gpio.c)
+list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/inc/stm32f0xx_rcc.h)
+list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_rcc.c)
+list(APPEND StdLib ${PER_LIB_PATH}/STM32F0xx_StdPeriph_Driver/src/stm32f0xx_gpio.c)
 
 # startup file
 #set(STARTUP_FILE ${SRC_DIR}/system/startup_stm32f10x_md.s)
-set(STARTUP_FILE /home/drd/prj/tmp/stm32/stm32f103_base/stm32f0/STM32F0xx_StdPeriph_Lib_V1.6.0/Libraries/CMSIS/Device/ST/STM32F0xx/Source/Templates/gcc_ride7/startup_stm32f031.s)
+set(STARTUP_FILE ${PER_LIB_PATH}/CMSIS/Device/ST/STM32F0xx/Source/Templates/gcc_ride7/startup_stm32f031.s)
 add_executable ( ${PROJECT_NAME}.elf ${H_FILES} ${C_FILES} ${CPP_FILES} ${STARTUP_FILE} ${StdLib})
 #add_executable ( ${PROJECT_NAME}.elf ${H_FILES} ${C_FILES} ${CPP_FILES} )
 #target_link_libraries(${PROJECT_NAME}    -lc )
