@@ -9,22 +9,28 @@
 #define SPIx_IRQn SPI1_IRQn
 #define SPIx_IRQHandler SPI1_IRQHandler
 
+#define SPIx_NSS_PIN GPIO_Pin_4
+#define SPIx_NSS_GPIO_PORT GPIOA
+#define SPIx_NSS_GPIO_CLK RCC_AHBPeriph_GPIOA
+#define SPIx_NSS_SOURCE GPIO_PinSource4
+#define SPIx_NSS_AF GPIO_AF_0
+
 #define SPIx_SCK_PIN GPIO_Pin_5
 #define SPIx_SCK_GPIO_PORT GPIOA
 #define SPIx_SCK_GPIO_CLK RCC_AHBPeriph_GPIOA
-#define SPIx_SCK_SOURCE GPIO_PinSource3
+#define SPIx_SCK_SOURCE GPIO_PinSource5
 #define SPIx_SCK_AF GPIO_AF_0
 
 #define SPIx_MISO_PIN GPIO_Pin_6
 #define SPIx_MISO_GPIO_PORT GPIOA
 #define SPIx_MISO_GPIO_CLK RCC_AHBPeriph_GPIOA
-#define SPIx_MISO_SOURCE GPIO_PinSource14
+#define SPIx_MISO_SOURCE GPIO_PinSource6
 #define SPIx_MISO_AF GPIO_AF_0
 
 #define SPIx_MOSI_PIN GPIO_Pin_7
 #define SPIx_MOSI_GPIO_PORT GPIOA
 #define SPIx_MOSI_GPIO_CLK RCC_AHBPeriph_GPIOA
-#define SPIx_MOSI_SOURCE GPIO_PinSource15
+#define SPIx_MOSI_SOURCE GPIO_PinSource7
 #define SPIx_MOSI_AF GPIO_AF_0
 
 #define SPI_DATASIZE SPI_DataSize_8b
@@ -38,6 +44,29 @@ GPIO_InitTypeDef GPIO_InitStructure;
 volatile uint32_t timestamp = 0;
 void SysTick_Handler(void) { timestamp++; }
 static void SPI_Config(void);
+
+void SpiWrite(uint16_t data) {
+  // Ждем, пока не освободится буфер передатчика
+  while (!(SPI1->SR & SPI_SR_TXE)) {
+    ;
+  }
+  // volatile uint16_t sr = SPI1->SR;
+  // заполняем буфер передатчика
+  SPI1->DR = data;
+}
+
+uint16_t SpiRead(void) {
+  SPI1->DR = 0;  // запускаем обмен
+
+  // Ждем, пока не появится новое значение
+  // в буфере приемника
+  while (!(SPI1->SR & SPI_SR_RXNE)) {
+    ;
+  }
+  // возвращаем значение буфера приемника
+  return SPI1->DR;
+}
+
 int main(void) {
   /*!< At this stage the microcontroller clock setting is already configured,
        this is done through SystemInit() function which is called from startup
@@ -54,7 +83,7 @@ int main(void) {
   /* Initializes the SPI communication */
   SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
   SPI_Init(SPIx, &SPI_InitStructure);
-
+  // SPI_Sla
   /* Initialize the FIFO threshold */
   SPI_RxFIFOThresholdConfig(SPIx, SPI_RxFIFOThreshold_QF);
 
@@ -70,7 +99,6 @@ int main(void) {
   /* GPIOC Periph clock enable */
   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
 
-  /* Configure PC10 and PC11 in output pushpull mode */
   // const uint16_t led_pin = GPIO_Pin_1;
   const uint16_t pin = GPIO_Pin_1;
   GPIO_InitStructure.GPIO_Pin = pin;
@@ -80,18 +108,25 @@ int main(void) {
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+  GPIO_WriteBit(GPIOA, pin, Bit_SET);
   //////////////////////////////////////
-  /// ////////////////////////////////////
+  const uint16_t data_size = 32;
+  uint16_t data[data_size];
 
-  /* To achieve GPIO toggling maximum frequency, the following  sequence is
-     mandatory. You can monitor PC10 and PC11 on the scope to measure the output
-     signal. If you need to fine tune this frequency, you can add more GPIO
-     set/reset cycles to minimize more the infinite loop timing. This code needs
-     to be compiled with high speed optimization option.  */
+  // SPI_SSOutputCmd(SPI1, ENABLE);
+
+  for (uint16_t i = 0; i < data_size; i++) {
+    uint16_t d_out = i;
+
+    SpiWrite(d_out);
+    // SpiWrite(0xFF);
+    data[i] = SpiRead();
+  }
+  // SPI_SSOutputCmd(SPI1, DISABLE);
   int z = 0;
   while (1) {
     const BitAction ba = (0 == z) ? Bit_SET : Bit_RESET;
-    GPIO_WriteBit(GPIOA, pin, ba);
+    // GPIO_WriteBit(GPIOA, pin, ba);
     z = ~z;
   }
 }
@@ -125,9 +160,11 @@ static void SPI_Config(void) {
   RCC_APB2PeriphClockCmd(SPIx_CLK, ENABLE);
 
   /* Enable SCK, MOSI, MISO and NSS GPIO clocks */
-  RCC_AHBPeriphClockCmd(
-      SPIx_SCK_GPIO_CLK | SPIx_MISO_GPIO_CLK | SPIx_MOSI_GPIO_CLK, ENABLE);
+  RCC_AHBPeriphClockCmd(SPIx_NSS_GPIO_CLK | SPIx_SCK_GPIO_CLK |
+                            SPIx_MISO_GPIO_CLK | SPIx_MOSI_GPIO_CLK,
+                        ENABLE);
 
+  GPIO_PinAFConfig(SPIx_NSS_GPIO_PORT, SPIx_NSS_SOURCE, SPIx_NSS_AF);
   GPIO_PinAFConfig(SPIx_SCK_GPIO_PORT, SPIx_SCK_SOURCE, SPIx_SCK_AF);
   GPIO_PinAFConfig(SPIx_MOSI_GPIO_PORT, SPIx_MOSI_SOURCE, SPIx_MOSI_AF);
   GPIO_PinAFConfig(SPIx_MISO_GPIO_PORT, SPIx_MISO_SOURCE, SPIx_MISO_AF);
@@ -136,6 +173,10 @@ static void SPI_Config(void) {
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
+
+  /* SPI NSS pin configuration */
+  GPIO_InitStructure.GPIO_Pin = SPIx_NSS_PIN;
+  GPIO_Init(SPIx_NSS_GPIO_PORT, &GPIO_InitStructure);
 
   /* SPI SCK pin configuration */
   GPIO_InitStructure.GPIO_Pin = SPIx_SCK_PIN;
@@ -153,18 +194,21 @@ static void SPI_Config(void) {
   SPI_I2S_DeInit(SPI1);
   SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
   SPI_InitStructure.SPI_DataSize = SPI_DATASIZE;
+  // SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
   SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
   SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+  // SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
+  //  SPI_InitStructure.SPI_NSS = SPI_NSS_Hard;
   SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
+  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_32;
   SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
   SPI_InitStructure.SPI_CRCPolynomial = 7;
-
+  // SPI_Slave_Select_management
   /* Configure the SPI interrupt priority */
-  NVIC_InitStructure.NVIC_IRQChannel = SPI1_IRQn;
+  /*NVIC_InitStructure.NVIC_IRQChannel = SPI1_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPriority = 1;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
+  NVIC_Init(&NVIC_InitStructure);*/
 }
 
 /**
